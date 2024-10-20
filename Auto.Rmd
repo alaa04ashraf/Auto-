@@ -40,6 +40,26 @@ Auto2$mpg01 <- as.factor(Auto2$mpg01)
 cor_matrix <- cor(Auto2 %>% select(-mpg01))
 cor_matrix
 
+## mpg cylinders displacement horsepower weight
+## mpg 1.0000000 -0.7776175 -0.8051269 -0.7784268 -0.8322442
+## cylinders -0.7776175 1.0000000 0.9508233 0.8429834 0.8975273
+## displacement -0.8051269 0.9508233 1.0000000 0.8972570 0.9329944
+## horsepower -0.7784268 0.8429834 0.8972570 1.0000000 0.8645377
+## weight -0.8322442 0.8975273 0.9329944 0.8645377 1.0000000
+## acceleration 0.4233285 -0.5046834 -0.5438005 -0.6891955 -0.4168392
+## year 0.5805410 -0.3456474 -0.3698552 -0.4163615 -0.3091199
+## origin 0.5652088 -0.5689316 -0.6145351 -0.4551715 -0.5850054
+## acceleration year origin
+## mpg 0.4233285 0.5805410 0.5652088
+## cylinders -0.5046834 -0.3456474 -0.5689316
+## displacement -0.5438005 -0.3698552 -0.6145351
+## horsepower -0.6891955 -0.4163615 -0.4551715
+## weight -0.4168392 -0.3091199 -0.5850054
+## acceleration 1.0000000 0.2903161 0.2127458
+## year 0.2903161 1.0000000 0.1815277
+## origin 0.2127458 0.1815277 1.0000000
+
+
 # plots
 corrplot.mixed(cor_matrix, upper = "circle")
 pairs(Auto2)
@@ -68,11 +88,27 @@ method = "lda",
 trControl = train_control)
 lda_cv
 
+## Linear Discriminant Analysis
+##
+## 314 samples
+## 4 predictor
+## 2 classes: '0', '1'
+##
+## No pre-processing
+## Resampling: Cross-Validated (5 fold)
+## Summary of sample sizes: 251, 252, 250, 251, 252
+## Resampling results:
+##
+## Accuracy   Kappa
+## 0.9106439 0.8212221
+
 
 # Test error for LDA model
 lda_pred <- predict(lda_cv, test_data)
 lda_test_error <- mean(lda_pred != test_data$mpg01)
 lda_test_error
+
+## [1] 0.1410256
 
 # Part D: Logistic regression with cross-validation
 glm_cv <- train(mpg01 ~ cylinders + weight + displacement + horsepower,
@@ -82,11 +118,27 @@ family = "binomial",
 trControl = train_control)
 glm_cv
 
+## Generalized Linear Model
+##
+## 314 samples
+## 4 predictor
+## 2 classes: '0', '1'
+##
+## No pre-processing
+## Resampling: Cross-Validated (5 fold)
+## Summary of sample sizes: 252, 251, 251, 251, 251
+## Resampling results:
+##
+## Accuracy    Kappa
+## 0.9044035 0.8085231
+
+
 # Test error for logistic regression
 glm_pred <- predict(glm_cv, test_data)
 glm_test_error <- mean(glm_pred != test_data$mpg01)
 glm_test_error
 
+## [1] 0.1538462
 
 # Part E: Naive Bayes with cross-validation
 naive_cv <- train(mpg01 ~ cylinders + weight + displacement + horsepower,
@@ -95,10 +147,34 @@ method = "naive_bayes",
 trControl = train_control)
 naive_cv
 
+## Naive Bayes
+##
+## 314 samples
+## 4 predictor
+## 2 classes: '0', '1'
+##
+## No pre-processing
+## Resampling: Cross-Validated (5 fold)
+## Summary of sample sizes: 251, 251, 251, 251, 252
+## Resampling results across tuning parameters:
+##
+## usekernel Accuracy Kappa
+## FALSE 0.9108039 0.8218345
+## TRUE 0.9108551 0.8219258
+##
+## Tuning parameter 'laplace' was held constant at a value of 0
+## Tuning
+## parameter 'adjust' was held constant at a value of 1
+## Accuracy was used to select the optimal model using the largest value.
+## The final values used for the model were laplace = 0, usekernel = TRUE
+## and adjust = 1.
+
+
 # Test error for Naive Bayes
 naive_pred <- predict(naive_cv, test_data)
 naive_test_error <- mean(naive_pred != test_data$mpg01)
 naive_test_error
+## [1] 0.1538462
 
 # Part F: KNN with cross-validation, testing different K values
 set.seed(1)
@@ -109,10 +185,54 @@ trControl = train_control,
 tuneLength = 20)
 knn_cv
 
+## k-Nearest Neighbors
+##
+## 314 samples
+## 4 predictor
+## 2 classes: '0', '1'
+##
+## No pre-processing
+## Resampling: Cross-Validated (5 fold)
+## Summary of sample sizes: 251, 252, 251, 251, 251
+## Resampling results across tuning parameters:
+##
+## k Accuracy Kappa
+## 5 0.8822325 0.7643093
+## 7 0.8981055 0.7960408
+## 9 0.8949309 0.7897124
+## 11 0.8949821 0.7898356
+## 13 0.8949821 0.7898995
+## 15 0.8886329 0.7771402
+## 17 0.8885817 0.7771260
+## 19 0.8821813 0.7642947
+## 21 0.8853559 0.7706425
+## 23 0.8853047 0.7705770
+## 25 0.8885305 0.7770286
+## 27 0.8821301 0.7641974
+## 29 0.8821301 0.7641974
+7
+## 31 0.8821301 0.7641974
+## 33 0.8885305 0.7770286
+## 35 0.8853559 0.7706490
+## 37 0.8853559 0.7706425
+## 39 0.8853559 0.7706425
+## 41 0.8853559 0.7706425
+## 43 0.8885305 0.7769581
+##
+## Accuracy was used to select the optimal model using the largest value.
+## The final value used for the model was k = 7.
+
 # Test error for KNN
 knn_pred <- predict(knn_cv, test_data)
 knn_test_error <- mean(knn_pred != test_data$mpg01)
 knn_test_error
+## [1] 0.1538462
+
+best_k <- knn_cv$bestTune$k
+best_accuracy <- max(knn_cv$results$Accuracy)
+best_k
+## [1] 7
+best_accuracy
 
 K.collector <- rep(NA, 200)
 for (k.try in 1:200){
@@ -123,6 +243,7 @@ x.k <- c(1:200)
 plot(x.k,K.collector, type="o", pch=19, cex=0.5, main="K ")
 which.min(K.collector)
 
+## [1] 4
 
 ```
 
