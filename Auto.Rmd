@@ -1,0 +1,137 @@
+---
+title: "aUTO"
+author: "Alaa Aboelkhair"
+date: "2024-10-20"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(MASS)
+library(ISLR2)
+library(dplyr)
+library(corrplot)
+library(caret)
+library(e1071)
+library(naivebayes)
+library(class)
+
+# Part A: Create a binary variable based on median mpg
+med <- median(Auto$mpg)
+mpg01 <- ifelse(Auto$mpg > med, 1, 0)
+Auto <- data.frame(Auto, mpg01) # Add mpg01 to the Auto dataset
+# Part B: Select relevant variables and clean data
+Auto2 <- Auto %>%
+select(mpg, cylinders, displacement, horsepower, weight, acceleration, year, origin, mpg01) %>%
+filter(horsepower != "NA" & horsepower != "?")
+# Convert horsepower to numeric and mpg01 to factor
+Auto2$horsepower <- as.numeric(trimws(Auto2$horsepower))
+Auto2$mpg01 <- as.factor(Auto2$mpg01)
+# Correlation matrix for numerical variables
+cor_matrix <- cor(Auto2 %>% select(-mpg01))
+cor_matrix
+
+# plots
+corrplot.mixed(cor_matrix, upper = "circle")
+pairs(Auto2)
+par(mfrow=c(2,3))
+boxplot(cylinders ~ mpg01, data = Auto2, main = "cylinders vs. mpg01")
+boxplot(displacement ~ mpg01, data = Auto2, main = "displacement vs. mpg01")
+boxplot(horsepower ~ mpg01, data = Auto2, main = "horsepower vs. mpg01")
+boxplot(weight ~ mpg01, data = Auto2, main = "weight vs. mpg01")
+boxplot(acceleration ~ mpg01, data = Auto2, main = "acceleration vs. mpg01")
+boxplot(year ~ mpg01, data = Auto2, main = "year vs. mpg01")
+
+
+#The boxplots suggest a connection between "mpg01" and the variables "cylinders,
+#" "weight," "displacement," and "horsepower," indicating that these factors may influence the classification of "mpg01."
+# Part C: Split data (80% train, 20% test)
+set.seed(1)
+train_index <- createDataPartition(Auto2$mpg01, p = 0.8, list = FALSE)
+train_data <- Auto2[train_index, ]
+test_data <- Auto2[-train_index, ]
+# 5-fold cross-validation setup
+train_control <- trainControl(method = "cv", number = 5)
+# LDA model with cross-validation on training set
+lda_cv <- train(mpg01 ~ cylinders + weight + displacement + horsepower,
+data = train_data,
+method = "lda",
+trControl = train_control)
+lda_cv
+
+
+# Test error for LDA model
+lda_pred <- predict(lda_cv, test_data)
+lda_test_error <- mean(lda_pred != test_data$mpg01)
+lda_test_error
+
+# Part D: Logistic regression with cross-validation
+glm_cv <- train(mpg01 ~ cylinders + weight + displacement + horsepower,
+data = train_data,
+method = "glm",
+family = "binomial",
+trControl = train_control)
+glm_cv
+
+# Test error for logistic regression
+glm_pred <- predict(glm_cv, test_data)
+glm_test_error <- mean(glm_pred != test_data$mpg01)
+glm_test_error
+
+
+# Part E: Naive Bayes with cross-validation
+naive_cv <- train(mpg01 ~ cylinders + weight + displacement + horsepower,
+data = train_data,
+method = "naive_bayes",
+trControl = train_control)
+naive_cv
+
+# Test error for Naive Bayes
+naive_pred <- predict(naive_cv, test_data)
+naive_test_error <- mean(naive_pred != test_data$mpg01)
+naive_test_error
+
+# Part F: KNN with cross-validation, testing different K values
+set.seed(1)
+knn_cv <- train(mpg01 ~ cylinders + weight + displacement + horsepower,
+data = train_data,
+method = "knn",
+trControl = train_control,
+tuneLength = 20)
+knn_cv
+
+# Test error for KNN
+knn_pred <- predict(knn_cv, test_data)
+knn_test_error <- mean(knn_pred != test_data$mpg01)
+knn_test_error
+
+K.collector <- rep(NA, 200)
+for (k.try in 1:200){
+knn.prediction <- knn(train_data, test_data, train_data$mpg01, k = k.try)
+K.collector[k.try] <- mean(knn.prediction != test_data$mpg01)
+}
+x.k <- c(1:200)
+plot(x.k,K.collector, type="o", pch=19, cex=0.5, main="K ")
+which.min(K.collector)
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
